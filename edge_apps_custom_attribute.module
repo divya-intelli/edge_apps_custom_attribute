@@ -1,0 +1,53 @@
+<?php
+
+use Drupal\edge_apps_custom_attribute\Form\AppCustomAttributeMappingForm;
+use Drupal\apigee_edge\Entity\DeveloperApp;
+use Drupal\apigee_edge_teams\Entity\TeamApp;
+
+/**
+ * Implements hook_entity_presave().
+ */
+function edge_apps_custom_attribute_entity_presave(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity instanceof DeveloperApp || $entity instanceof TeamApp) {
+    $replace = _extract_drupal_and_edge_fields($entity, 'presave');
+    foreach ($replace as $field_name => $edge_name){
+      $apps_field = $entity->get($field_name)->getValue()[0]['value'] ?? '';
+        if($apps_field) {
+          $entity->decorated()->setAttribute($edge_name,$apps_field);
+        }
+      $entity->set($field_name, []);
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function edge_apps_custom_attribute_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if ('team_app_edit_form' === $form_id || 'developer_app_edit_for_developer_form' === $form_id){
+    $app_entity = \Drupal::routeMatch()->getParameter('app');
+    $replace = _extract_drupal_and_edge_fields($form, 'form_alter');
+
+    foreach ($replace as $field_name => $edge_name){
+      $form[$field_name]['widget'][0]['value']['#default_value'] = $app_entity->decorated()->getAttributes()->getValue($edge_name) ?? '';
+    }
+  }
+}
+
+function _extract_drupal_and_edge_fields($entity, $type = 'null'){
+  // Get the admin form value as array.
+  $mapping = \Drupal::config(AppCustomAttributeMappingForm::CONFIG_NAME)->get('mapping');
+  $value_set = preg_split('/\r\n|\r|\n/', $mapping);
+  $replace = [];
+  foreach ($value_set as $value) {
+    // Extract the form value into drupal field and edge field.
+    $atrribute_replace = explode(',', $value);
+    // Fetch the drupal field name ie 'field_*'.
+    $field_name = $atrribute_replace[0];
+    // Check if field exist in the form.
+    if ($field_name && ($type === 'form_alter' && array_key_exists($field_name, $entity)) || ($type === 'presave' && $entity->get($field_name))) {
+      $replace[$field_name] = $atrribute_replace[1];
+    }
+  }
+  return $replace;
+}

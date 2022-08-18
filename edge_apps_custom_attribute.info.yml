@@ -1,0 +1,11 @@
+name: Edge Apps Custom Attribute
+type: module
+description: 'Custom module for apps custom attribute field'
+package: Custom
+version: 1.0
+core_version_requirement: ^9
+
+dependencies:
+  - apigee_edge:apigee_edge_teams
+
+configure: edge_apps_custom_attribute.settings_form

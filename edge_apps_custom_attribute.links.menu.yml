@@ -1,0 +1,6 @@
+edge_apps_custom_attribute.settings_mapping:
+  title: 'Edge App Custom Attribute Mapping'
+  route_name: edge_apps_custom_attribute.settings_form
+  description: 'Configure Edge App Custom Attribute Mapping.'
+  parent: system.admin_config_edge
+  weight: 101
